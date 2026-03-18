@@ -1,3 +1,4 @@
+
 import streamlit as st
 import time
 from datetime import datetime, timedelta
@@ -124,7 +125,7 @@ if score >= 585:
 elif score <= 15:
     sig, col, icon, arrow, msg = "NEXT: SELL", "#ff4b4b", "📉", "⬇️", f"এন্ট্রি: {next_t} মিনিটে SELL"
 else:
-    sig, col, icon, arrow, msg = "RISKY: STOP", "#FFD700", "✋", "লজিক অমিল! এই ক্যান্ডেল বাদ দিন"
+    sig, col, icon, arrow, msg = "RISKY: STOP", "#FFD700", "✋", "✋", "লজিক অমিল! এই ক্যান্ডেল বাদ দিন"
 
 # --- ৫. মেইন ড্যাশবোর্ড ---
 st.markdown(f"""
