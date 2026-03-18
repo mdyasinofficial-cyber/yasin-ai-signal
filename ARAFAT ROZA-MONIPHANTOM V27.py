@@ -1,10 +1,10 @@
-importtstreamlit as st
+import streamlit as st
 import time
 from datetime import datetime, timedelta
 import pytz
 import random
 
-# --- ১. প্রো কনফিগারেশন: ARAFAT ROZA-MONI : PHANTOM V31 (DYNAMIC COLOR) ---
+# --- ১. কনফিগারেশন ---
 st.set_page_config(
     page_title="ARAFAT ROZA-MONI : PHANTOM V31", 
     layout="centered",
@@ -17,7 +17,7 @@ now = datetime.now(tz)
 rem_sec = 60 - now.second
 next_t = (now + timedelta(minutes=1)).strftime('%I:%M %p')
 
-# অটোমেটিক মার্কেট স্ক্যানার সিমুলেশন
+# মার্কেট লিস্ট
 market_list = [
     {"name": "EUR/USD", "flag": "🇪🇺🇺🇸"},
     {"name": "GOLD (XAU)", "flag": "🟡"},
@@ -30,7 +30,7 @@ random.seed(now.minute + now.hour)
 active_market = random.choice(market_list)
 score = random.randint(1, 1000)
 
-# কালার ও সিগন্যাল লজিক সেটআপ
+# কালার ও সিগন্যাল লজিক
 if score >= 990: 
     sig_en, sig_bn, bg_col, text_col, icon = "STRONG BUY", "এখনই বাই (BUY) নিন", "#002b5c", "#00fbff", "📈"
     voice_cmd = f"এলার্ট! {active_market['name']} মার্কেটে বাই এন্ট্রি নিন।"
@@ -40,86 +40,61 @@ elif score <= 10:
 else:
     sig_en, sig_bn, bg_col, text_col, icon, voice_cmd = "SCANNING...", "সিগন্যাল খুঁজছি...", "#000000", "#ffd700", "👻", ""
 
-# ডাইনামিক সিএসএস (CSS) দিয়ে কালার চেঞ্জ
+# ডাইনামিক স্টাইল
 st.markdown(f"""
     <style>
     #MainMenu, footer, header, .stDeployButton, #stDecoration, [data-testid="sidebarNavView"] {{visibility: hidden; display:none;}}
-    
-    /* পুরো অ্যাপের ব্যাকগ্রাউন্ড সিগন্যাল অনুযায়ী বদলে যাবে */
-    .stApp {{ 
-        background-color: {bg_col}; 
-        transition: background-color 0.8s ease;
-    }}
-    
-    .phantom-card-v31 {{
-        background: rgba(0,0,0,0.5);
-        border: 3px solid {text_col};
-        border-radius: 30px;
-        padding: 25px;
+    .stApp {{ background-color: {bg_col}; transition: background-color 0.8s ease; }}
+    .phantom-card {{
+        background: rgba(0,0,0,0.6);
+        border: 2px solid {text_col};
+        border-radius: 25px;
+        padding: 20px;
         text-align: center;
-        box-shadow: 0 0 50px {text_col}44;
+        box-shadow: 0 0 40px {text_col}33;
         max-width: 350px;
         margin: auto;
         color: {text_col};
     }}
-    
-    .timer-v31 {{ font-size: 110px; font-weight: 900; margin: 0; line-height: 1; color: {text_col}; }}
-    
-    .signal-en {{ font-size: 38px; font-weight: 900; margin-top: 10px; text-transform: uppercase; color: {text_col}; }}
-    
+    .timer {{ font-size: 100px; font-weight: 900; margin: 0; line-height: 1; }}
     .signal-bn {{ 
-        font-size: 22px; 
-        font-weight: bold; 
-        color: #fff; 
-        background: {text_col}66; 
-        padding: 8px 20px; 
-        border-radius: 50px; 
-        display: inline-block; 
-        margin-top: 10px; 
-        box-shadow: 0 0 20px {text_col}aa;
-    }}
-    
-    .market-box-v31 {{
-        background: rgba(255, 255, 255, 0.05);
-        border-bottom: 2px solid {text_col};
-        padding: 15px;
-        border-radius: 15px;
-        margin-bottom: 20px;
-        font-size: 26px;
-        font-weight: bold;
+        font-size: 20px; font-weight: bold; color: #fff; background: {text_col}66; 
+        padding: 5px 15px; border-radius: 50px; display: inline-block; margin-top: 5px; 
     }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- ৪. ভয়েস এলার্ট ---
+# লগইন চেক (পাসওয়ার্ড ছাড়া সরাসরি দেখার জন্য চাইলে সরাতে পারেন)
+if 'auth' not in st.session_state: st.session_state.auth = False
+if not st.session_state.auth:
+    if st.text_input("মাস্টার পিন", type="password") == "Arafat@Vip#Quantum2026":
+        st.session_state.auth = True
+        st.rerun()
+    st.stop()
+
+# ভয়েস এলার্ট
 if voice_cmd != "" and rem_sec >= 58:
     st.markdown(f"""<audio autoplay><source src="https://translate.google.com/translate_tts?ie=UTF-8&q={voice_cmd.replace(' ', '%20')}&tl=bn&client=tw-ob" type="audio/mpeg"></audio>""", unsafe_allow_html=True)
 
-# --- ৫. মেইন ড্যাশবোর্ড ডিসপ্লে ---
+# মেইন ডিসপ্লে
 st.markdown(f"""
-    <div class='phantom-card-v31'>
-        <div style='font-size: 12px; letter-spacing: 2px; opacity: 0.7; margin-bottom: 10px;'>ARAFAT ROZA-MONI : PHANTOM V31</div>
-        
-        <div class='market-box-v31'>
-            <span style='font-size:40px;'>{active_market['flag']}</span><br>
-            <span>{active_market['name']}</span>
+    <div class='phantom-card'>
+        <div style='font-size: 10px; letter-spacing: 2px; opacity: 0.6;'>ARAFAT ROZA-MONI : PHANTOM V31</div>
+        <div style='padding: 10px; font-size: 22px; font-weight: bold; border-bottom: 1px solid {text_col}33;'>
+            {active_market['flag']} {active_market['name']}
         </div>
-        
-        <div class='timer-v31'>{rem_sec}s</div>
-        
-        <div style='margin-top: 25px;'>
-            <h1 style='font-size: 80px; margin: 0; color: {text_col};'>{icon}</h1>
-            <div class='signal-en'>{sig_en}</div>
+        <div class='timer'>{rem_sec}s</div>
+        <div style='margin-top: 15px;'>
+            <h1 style='font-size: 60px; margin: 0; color: {text_col};'>{icon}</h1>
+            <div style='font-size: 30px; font-weight: 900;'>{sig_en}</div>
             <div class='signal-bn'>{sig_bn}</div>
         </div>
-        
-        <div style='margin-top: 30px; font-size: 14px; opacity: 0.8;'>
-            <p style='margin:0;'>NEXT ENTRY: <b style='font-size: 18px;'>{next_t}</b></p>
-            <p style='margin-top: 5px; font-size: 10px; letter-spacing: 4px;'>99.9% SHURE SHOT ACTIVE</p>
+        <div style='margin-top: 20px; font-size: 12px; opacity: 0.7;'>
+            NEXT: {next_t} | 99.9% SHOT
         </div>
     </div>
 """, unsafe_allow_html=True)
 
 time.sleep(1)
 st.rerun()
-
+    
