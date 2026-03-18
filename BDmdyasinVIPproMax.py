@@ -1,17 +1,29 @@
+
 import streamlit as st
 import time
 from datetime import datetime, timedelta
 import pytz
 import random
 
-# --- ১. প্রো কনফিগারেশন V26 (পাসওয়ার্ড সিস্টেম যুক্ত) ---
+# --- ১. প্রো কনফিগারেশন V26 (সাউন্ড সিস্টেম যুক্ত) ---
 st.set_page_config(
     page_title="ARAFAT V26 ELITE", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# ক্লিন লুক স্টাইল (সব লোগো ও মেনু লুকানোর জন্য)
+# সাউন্ড প্লে করার জন্য ফাংশন (BUY/SELL আসলে বাজবে)
+def play_alert():
+    # একটি স্ট্যান্ডার্ড বিপিং সাউন্ড ইউআরএল
+    sound_url = "https://www.soundjay.com/buttons/button-3.mp3"
+    audio_html = f"""
+        <audio autoplay>
+            <source src="{sound_url}" type="audio/mp3">
+        </audio>
+    """
+    st.markdown(audio_html, unsafe_allow_html=True)
+
+# ক্লিন লুক স্টাইল
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -29,7 +41,6 @@ hide_st_style = """
             }
             .timer-val { font-size: 85px; font-weight: bold; color: #00fbff; text-shadow: 0 0 15px #00fbff66; }
             
-            /* মার্কেট বাটন স্টাইল */
             .stButton>button {
                 width: 100%;
                 background-color: #161b22;
@@ -40,14 +51,11 @@ hide_st_style = """
                 margin-bottom: 2px;
             }
             .stButton>button:hover { border-color: #00fbff; background: #1c2128; }
-            
-            /* লগইন বক্স স্টাইল */
             .login-box { padding: 40px 20px; background: #161b22; border-radius: 20px; text-align: center; border: 2px solid #30363d; }
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# আপনার নির্ধারিত পাসওয়ার্ড
 SECURE_PASSWORD = "Arafat@Vip#Quantum2026"
 
 # --- ২. লগইন সিস্টেম ---
@@ -67,7 +75,7 @@ if not st.session_state.auth:
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- ৩. সম্পূর্ণ ১০০+ মার্কেটের ডাটাবেস (আপনার দেওয়া লিস্ট) ---
+# --- ৩. ১০০+ মার্কেট ডাটাবেস ---
 markets_db = {
     "🌍 FOREX MAJORS (1-20)": [
         {"icon": "🇪🇺🇺🇸", "label": "EUR/USD", "tv": "1"}, {"icon": "🇬🇧🇺🇸", "label": "GBP/USD", "tv": "2"},
@@ -124,13 +132,17 @@ pair = st.session_state.pair
 random.seed(now.minute + now.hour + now.day + int(pair['tv']))
 score = random.randint(1, 600)
 
-if score >= 585: sig, col, icon, arrow, msg = "NEXT: BUY", "#00ff88", "📈", "⬆️", f"এন্ট্রি: {next_t} মিনিটে BUY"
-elif score <= 15: sig, col, icon, arrow, msg = "NEXT: SELL", "#ff4b4b", "📉", "⬇️", f"এন্ট্রি: {next_t} মিনিটে SELL"
-else: sig, col, icon, arrow, msg = "RISKY: STOP", "#FFD700", "✋", "✋", "লজিক অমিল! এই ক্যান্ডেল বাদ দিন"
+if score >= 585: 
+    sig, col, icon, arrow, msg = "NEXT: BUY", "#00ff88", "📈", "⬆️", f"এন্ট্রি: {next_t} মিনিটে BUY"
+    if rem_sec >= 58: play_alert() # নতুন ক্যান্ডেল আসার প্রথম ২ সেকেন্ডে শব্দ হবে
+elif score <= 15: 
+    sig, col, icon, arrow, msg = "NEXT: SELL", "#ff4b4b", "📉", "⬇️", f"এন্ট্রি: {next_t} মিনিটে SELL"
+    if rem_sec >= 58: play_alert() # নতুন ক্যান্ডেল আসার প্রথম ২ সেকেন্ডে শব্দ হবে
+else: 
+    sig, col, icon, arrow, msg = "RISKY: STOP", "#FFD700", "✋", "✋", "লজিক অমিল! এই ক্যান্ডেল বাদ দিন"
 
 # --- ৫. মেইন ড্যাশবোর্ড ---
 
-# মার্কেট সিলেকশন
 with st.expander("📊 ১০০+ মার্কেট লিস্ট (সিলেক্ট করতে ক্লিক করুন)"):
     for cat, pairs in markets_db.items():
         st.markdown(f"<p style='color:#58a6ff; margin:10px 0 5px 0;'>{cat}</p>", unsafe_allow_html=True)
@@ -157,7 +169,7 @@ st.markdown(f"""
         <div style='background:{col}15; padding:12px; border-radius:15px; border:1px solid {col}33;'>
             <b style='color:white; font-size:15px;'>{msg}</b>
         </div>
-        <p style='margin-top:15px; color:#58a6ff; font-size:11px;'>V26 QUANTUM • 100+ MARKETS LIVE</p>
+        <p style='margin-top:15px; color:#58a6ff; font-size:11px;'>V26 QUANTUM • 100+ MARKETS LIVE 🔊</p>
     </div>
 """, unsafe_allow_html=True)
 
