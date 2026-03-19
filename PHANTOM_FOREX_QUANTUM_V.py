@@ -6,13 +6,13 @@ import random
 
 # --- ১. মেম্বারশিপ ও কনফিগারেশন ---
 USER_KEYS = {"ARAFAT_VIP_2026": "Arafat Bhai (Admin)"}
-st.set_page_config(page_title="PHANTOM V18 BANK-FLOW", layout="wide")
+st.set_page_config(page_title="PHANTOM V19 LOT-CALC", layout="wide")
 
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 # --- ২. লগইন ---
 if not st.session_state.auth:
-    st.markdown("<h1 style='text-align:center;'>👻 PHANTOM V18</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>👻 PHANTOM V19</h1>", unsafe_allow_html=True)
     key_input = st.text_input("মাস্টার পাসওয়ার্ড দিন", type="password")
     if st.button("সিস্টেম আনলক করুন"):
         if key_input in USER_KEYS:
@@ -20,92 +20,71 @@ if not st.session_state.auth:
             st.rerun()
     st.stop()
 
-# --- ৩. স্টাইল (Institutional Look) ---
+# --- ৩. ডিজাইন (Lot Calculator UI) ---
 st.markdown("""
     <style>
     .stApp { background-color: #010101; color: #ffffff; }
-    .bank-card {
-        border: 1px solid #222; border-radius: 12px; padding: 15px;
-        background: #0a0a0a; margin-bottom: 15px; border-left: 10px solid #444;
+    .calc-card {
+        border: 1px solid #333; border-radius: 15px; padding: 20px;
+        background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+        margin-bottom: 20px; border-left: 8px solid #ffd700;
     }
-    .rocket-border { border-left-color: #ffd700 !important; box-shadow: 0 0 15px #ffd70033; }
-    .buy-border { border-left-color: #00fbff !important; }
-    .sell-border { border-left-color: #ff4b4b !important; }
-    .entry-box { background: #151515; padding: 10px; border-radius: 8px; text-align: center; width: 48%; border: 1px solid #333; }
-    .label-tp { color: #00ff00; font-size: 11px; font-weight: bold; }
-    .label-sl { color: #ff4b4b; font-size: 11px; }
-    .rocket-msg { color: #ffd700; font-weight: bold; font-size: 12px; text-align: center; margin-top: 5px; }
+    .entry-box { background: #222; padding: 12px; border-radius: 10px; text-align: center; width: 48%; border: 1px solid #444; }
+    .profit-text { color: #00ff00; font-size: 14px; font-weight: bold; margin-top: 5px; }
+    .loss-text { color: #ff4b4b; font-size: 14px; margin-top: 2px; }
+    .lot-input-style { background: #ffd700; color: #000; padding: 5px; border-radius: 5px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ৪. টাইম ইঞ্জিন ---
+# --- ৪. লট ক্যালকুলেটর ইনপুট ---
+st.markdown("<h3 style='text-align:center; color:#ffd700;'>LOT & PROFIT CALCULATOR</h3>", unsafe_allow_html=True)
+user_lot = st.number_input("আপনি কত লট কিনতে চান? (Lot Size)", min_value=0.01, max_value=10.0, value=0.01, step=0.01)
+st.info(f"আপনার সেট করা লট: {user_lot}। নিচের প্রফিট হিসাব এই লট অনুযায়ী দেখানো হচ্ছে।")
+
+# --- ৫. টাইম ইঞ্জিন ---
 tz = pytz.timezone('Asia/Dhaka')
 now = datetime.now(tz)
-current_time_str = now.strftime("%I:%M:%S %p")
+e5, e15 = ( (now.minute // 5 + 1) * 5 ), ( (now.minute // 15 + 1) * 15 )
 
-def get_time(interval):
-    m = (now.minute // interval + 1) * interval
-    target = now.replace(minute=m % 60, second=0, microsecond=0)
-    if m >= 60: target += timedelta(hours=1)
-    return target.strftime("%I:%M %p")
-
-e5, e15 = get_time(5), get_time(15)
-
-# --- ৫. মার্কেট লজিক (Institutional Flow) ---
-st.markdown(f"<h3 style='text-align:center; color:#ffd700;'>PHANTOM V18: BANK-FLOW DETECTOR</h3>", unsafe_allow_html=True)
-search = st.text_input("🔍 যেকোনো মার্কেট বা OTC সার্চ দিন...", placeholder="যেমন: GOLD, USDBRL...")
-
+# --- ৬. মার্কেট ডিসপ্লে (আপনার লট অনুযায়ী লাভ/লস) ---
 markets = [{"n": "GOLD (XAUUSD)", "f": "🟡"}, {"n": "EURUSD", "f": "🇪🇺🇺🇸"}, {"n": "GBPUSD", "f": "🇬🇧🇺🇸"}]
-for a in ["USD", "EUR", "GBP", "AUD"]:
-    for b in ["JPY", "CHF", "CAD", "NGN"]:
-        markets.append({"n": f"{a}{b}", "f": "🌐"})
-        markets.append({"n": f"{a}{b}-OTC", "f": "💻"})
 
-display = [m for m in markets if search.upper() in m['n'].upper()] if search else markets[:20]
-
-for m in display:
-    # বড় লট ক্যালকুলেশন (Random Seed for Stability)
+for m in markets:
     random.seed(now.hour + (now.minute // 5) + ord(m['n'][0]))
-    bank_vol = random.randint(1000, 50000) # লট ভলিউম
-    is_rocket = bank_vol > 40000
     
-    # ৫মি সিগন্যাল
-    s5 = random.randint(1, 100)
-    t5, c5 = ("BUY", "#00fbff") if s5 > 50 else ("SELL", "#ff4b4b")
-    tp5 = round(random.uniform(5.0, 15.0), 2) if is_rocket else round(random.uniform(1.0, 3.5), 2)
+    # বেস প্রফিট (১ লটের জন্য)
+    base_tp5 = random.uniform(10.0, 30.0)
+    base_tp15 = random.uniform(40.0, 100.0)
     
-    # ১৫মি সিগন্যাল
-    random.seed(now.hour + (now.minute // 15) + ord(m['n'][0]))
-    s15 = random.randint(1, 100)
-    t15, c15 = ("BUY", "#00fbff") if s15 > 50 else ("SELL", "#ff4b4b")
-    tp15 = round(random.uniform(15.0, 45.0), 2) if is_rocket else round(random.uniform(4.0, 8.5), 2)
-
-    border = "rocket-border" if is_rocket else ("buy-border" if s15 > 50 else "sell-border")
+    # আপনার লট অনুযায়ী আসল ডলার হিসাব
+    actual_tp5 = round(base_tp5 * user_lot, 2)
+    actual_sl5 = round(actual_tp5 * 0.4, 2)
+    
+    actual_tp15 = round(base_tp15 * user_lot, 2)
+    actual_sl15 = round(actual_tp15 * 0.4, 2)
 
     st.markdown(f"""
-        <div class="bank-card {border}">
+        <div class="calc-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="width: 35%;">
-                    <div style="font-size:18px; font-weight:bold;">{m['f']} {m['n']}</div>
-                    <div style="font-size:11px; color:#aaa;">VOL: {bank_vol} Lots Detected</div>
+                <div style="width: 30%;">
+                    <b style="font-size:18px;">{m['f']} {m['n']}</b><br>
+                    <small style="color:#ffd700;">Lot: {user_lot}</small>
                 </div>
-                <div style="width: 65%; display: flex; justify-content: space-between;">
+                <div style="width: 70%; display: flex; justify-content: space-between;">
                     <div class="entry-box">
-                        <b style="color:{c5}; font-size:15px;">{t5} (৫মি)</b><br>{e5}
-                        <div class="label-tp">TP: +${tp5}</div>
-                        <div class="label-sl">SL: -${round(tp5*0.3, 2)}</div>
+                        <b style="color:#00fbff;">BUY (৫মি)</b>
+                        <div class="profit-text">লাভ: +${actual_tp5}</div>
+                        <div class="loss-text">লস: -${actual_sl5}</div>
                     </div>
                     <div class="entry-box">
-                        <b style="color:{c15}; font-size:15px;">{t15} (১৫মি)</b><br>{e15}
-                        <div class="label-tp">TP: +${tp15}</div>
-                        <div class="label-sl">SL: -${round(tp15*0.3, 2)}</div>
+                        <b style="color:#ffd700;">DUAL (১৫মি)</b>
+                        <div class="profit-text">লাভ: +${actual_tp15}</div>
+                        <div class="loss-text">লস: -${actual_sl15}</div>
                     </div>
                 </div>
             </div>
-            {"<div class='rocket-msg'>🚀 ROCKET MOVE DETECTED: ব্যাংক বড় অর্ডার প্লেস করেছে!</div>" if is_rocket else "<div style='text-align:center; font-size:11px; color:#555; margin-top:5px;'>STANDARD BANK FLOW DETECTED</div>"}
         </div>
     """, unsafe_allow_html=True)
 
-time.sleep(10)
+time.sleep(15)
 st.rerun()
-    
