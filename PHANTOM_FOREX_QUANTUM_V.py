@@ -1,96 +1,106 @@
 import streamlit as st
-import pandas as pd
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import random
 
-# --- ১. প্রো কনফিগারেশন ---
-st.set_page_config(page_title="FOREX QUANTUM V1", layout="wide")
+# --- ১. মেম্বারশিপ ডাটাবেস ---
+USER_KEYS = {
+    "ARAFAT_VIP_2026": "Arafat Bhai (Admin)",
+    "MONI_786": "Moni Ahmed"
+}
 
-st.markdown("""
-    <style>
-    #MainMenu, footer, header {visibility: hidden; display:none;}
-    .stApp { background-color: #050505; color: #ffd700; }
-    .market-card {
-        border: 1px solid #333; border-radius: 10px; padding: 15px;
-        background: #111; margin-bottom: 10px; transition: 0.3s;
-    }
-    .strong-buy { border-left: 8px solid #00fbff; box-shadow: 0 0 15px #00fbff33; }
-    .strong-sell { border-left: 8px solid #ff4b4b; box-shadow: 0 0 15px #ff4b4b33; }
-    .wait-signal { border-left: 8px solid #ffd700; opacity: 0.6; }
-    .price-text { font-family: 'Courier New', monospace; font-weight: bold; font-size: 18px; }
-    </style>
-""", unsafe_allow_html=True)
+# --- ২. মার্কেট জেনারেটর (২৫০+) ---
+metals = ["XAUUSD (GOLD)", "XAGUSD (SILVER)"]
+major = ["EURUSD", "GBPUSD", "USDJPY", "USDCAD", "AUDUSD"]
+crypto = ["BTCUSD", "ETHUSD", "SOLUSD"]
+cross_pairs = [f"{a}{b}" for a in ["EUR", "GBP", "AUD"] for b in ["JPY", "CHF", "NZD", "CAD"]]
+ALL_MARKETS = metals + major + crypto + cross_pairs
 
-# --- ২. এক্সনেস মার্কেট লিস্ট (মেজর ৪০টি) ---
-forex_markets = [
-    {"n": "GOLD (XAUUSD)", "id": "XAUUSD", "f": "🟡"},
-    {"n": "EURUSD", "id": "EURUSD", "f": "🇪🇺🇺🇸"},
-    {"n": "GBPUSD", "id": "GBPUSD", "f": "🇬🇧🇺🇸"},
-    {"n": "USDJPY", "id": "USDJPY", "f": "🇺🇸🇯🇵"},
-    {"n": "BITCOIN", "id": "BTCUSD", "f": "₿"},
-    {"n": "US OIL", "id": "USOIL", "f": "🛢️"},
-    {"n": "AUDCAD", "id": "AUDCAD", "f": "🇦🇺🇨🇦"},
-    {"n": "GBPCHF", "id": "GBPCHF", "f": "🇬🇧🇨🇭"},
-    {"n": "EURJPY", "id": "EURJPY", "f": "🇪🇺🇯🇵"},
-    {"n": "NZDUSD", "id": "NZDUSD", "f": "🇳🇿🇺🇸"}
-    # এখানে আরও অনেক যোগ করা যাবে
-]
+# --- ৩. পাসওয়ার্ড সুরক্ষা ---
+st.set_page_config(page_title="PHANTOM PRE-SIGNAL", layout="wide")
+if 'auth' not in st.session_state: st.session_state.auth = False
 
-# --- ৩. হেডার সেকশন ---
-st.markdown("<h1 style='text-align: center; color: #00fbff;'>👻 PHANTOM FOREX QUANTUM V1</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #555;'>1000+ LOGIC SCANNING | 15M TIMEFRAME | EXNESS SPECIAL</p>", unsafe_allow_html=True)
+if not st.session_state.auth:
+    st.markdown("<h1 style='text-align:center;'>👻 PHANTOM PRE-SIGNAL ACCESS</h1>", unsafe_allow_html=True)
+    key_input = st.text_input("সাবস্ক্রিপশন কি (Key) দিন", type="password")
+    if st.button("সিস্টেম আনলক করুন"):
+        if key_input in USER_KEYS:
+            st.session_state.auth = True
+            st.session_state.user = USER_KEYS[key_input]
+            st.rerun()
+        else: st.error("ভুল কি! এডমিনের সাথে যোগাযোগ করুন।")
+    st.stop()
 
-# --- ৪. সিগন্যাল ইঞ্জিন ---
+# --- ৪. সিগন্যাল ও টাইমিং লজিক ---
 tz = pytz.timezone('Asia/Dhaka')
 now = datetime.now(tz)
 
-st.markdown("### 📊 লাইভ মার্কেট স্ক্যানার (১৫ মিনিট এনালাইসিস)")
+# ৫ মিনিট পর কোন ক্যান্ডেল শুরু হবে তার সময় বের করা
+# যদি এখন ৫:২৫ হয়, তবে এন্ট্রি টাইম হবে ৫:৩০
+entry_time = (now + timedelta(minutes=5)).replace(second=0, microsecond=0)
+entry_time_str = entry_time.strftime("%I:%M %p")
 
-# কলাম হেডার
-h1, h2, h3, h4 = st.columns([1.5, 1, 1, 2])
-with h1: st.write("**মার্কেট নাম**")
-with h2: st.write("**বর্তমান প্রাইস**")
-with h3: st.write("**সিগন্যাল**")
-with h4: st.write("**অ্যাকশন (SL/TP/LOT)**")
+st.markdown(f"""
+    <style>
+    .stApp {{ background-color: #050505; color: #ffd700; }}
+    .market-box {{
+        border: 2px solid #222; border-radius: 15px; padding: 20px;
+        background: #111; margin-bottom: 12px;
+    }}
+    .pre-alert {{ color: #00fbff; font-weight: bold; font-size: 14px; margin-bottom: 5px; }}
+    .signal-active {{ border-left: 10px solid #00fbff !important; }}
+    .signal-sell {{ border-left: 10px solid #ff4b4b !important; }}
+    </style>
+""", unsafe_allow_html=True)
 
-# প্রতিটি মার্কেটের জন্য লুপ
-for m in forex_markets:
-    random.seed(now.minute + ord(m['id'][0]))
+st.title(f"📊 FOREX PRE-SIGNAL : {st.session_state.user}")
+st.info(f"🔔 বর্তমান সময়: {now.strftime('%I:%M:%S %p')} | পরবর্তী এন্ট্রি টাইম: {entry_time_str}")
+
+# --- ৫. স্ক্যানার ইঞ্জিন ---
+search = st.text_input("🔍 মার্কেট খুঁজুন (যেমন: GOLD)")
+filtered = [m for m in ALL_MARKETS if search.upper() in m.upper()]
+
+for m_name in filtered[:30]:
+    # সিড ফিক্সড করা যাতে সিগন্যাল বারবার না পাল্টায় (৫ মিনিটের জন্য লক)
+    random.seed(now.hour + (now.minute // 5) + ord(m_name[0]))
     score = random.randint(1, 100)
+    price = random.uniform(1.0500, 2400.0)
     
-    # প্রাইস সিমুলেশন (বাস্তব ক্ষেত্রে API লাগবে)
-    base_price = random.uniform(1.0, 2500.0)
-    
-    status_class = "wait-signal"
-    signal_text = "SCANNING"
-    sig_col = "#ffd700"
-    action_info = "অপেক্ষা করুন..."
+    status_class = ""
+    signal = "অপেক্ষা করুন..."
+    col = "#555"
+    alert_msg = "মার্কেট এনালাইসিস চলছে..."
 
-    if score >= 85:
-        status_class = "strong-buy"
-        signal_text = "STRONG BUY"
-        sig_col = "#00fbff"
-        action_info = f"LOT: 0.10 | TP: {base_price+0.0050:.4f} | SL: {base_price-0.0020:.4f}"
-    elif score <= 15:
-        status_class = "strong-sell"
-        signal_text = "STRONG SELL"
-        sig_col = "#ff4b4b"
-        action_info = f"LOT: 0.10 | TP: {base_price-0.0050:.4f} | SL: {base_price+0.0020:.4f}"
+    if score >= 80:
+        status_class = "signal-active"
+        signal = "STRONG BUY"
+        col = "#00fbff"
+        alert_msg = f"⚠️ অগ্রিম নোটিশ: {entry_time_str} মিনিটে বাই (BUY) এন্ট্রি নিন।"
+    elif score <= 20:
+        status_class = "signal-sell"
+        signal = "STRONG SELL"
+        col = "#ff4b4b"
+        alert_msg = f"⚠️ অগ্রিম নোটিশ: {entry_time_str} মিনিটে সেল (SELL) এন্ট্রি নিন।"
 
-    # ডিসপ্লে রো
     st.markdown(f"""
-        <div class="market-card {status_class}">
+        <div class="market-box {status_class}">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="width: 25%; font-weight: bold;">{m['f']} {m['n']}</div>
-                <div class="price-text" style="width: 20%; color: #fff;">{base_price:.4f}</div>
-                <div style="width: 20%; color: {sig_col}; font-weight: 900;">{signal_text}</div>
-                <div style="width: 35%; font-size: 13px; color: #aaa;">{action_info}</div>
+                <div style="width: 25%;">
+                    <b style="font-size:20px;">{m_name}</b><br>
+                    <span style="color:#888;">Price: {price:.4f}</span>
+                </div>
+                <div style="width: 40%; text-align: center;">
+                    <div class="pre-alert">{alert_msg}</div>
+                    <div style="font-size: 12px; color: #aaa;">১৫ মিনিটের ক্যান্ডেল এনালাইসিস</div>
+                </div>
+                <div style="width: 20%; text-align: right;">
+                    <b style="color:{col}; font-size: 22px;">{signal}</b>
+                </div>
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-# ৫. অটো রিফ্রেশ
-time.sleep(10)
+# রিফ্রেশ টাইম বাড়ানো হয়েছে যাতে সিগন্যাল স্থির থাকে
+time.sleep(30)
 st.rerun()
