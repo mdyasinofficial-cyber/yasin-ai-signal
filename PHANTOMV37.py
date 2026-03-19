@@ -5,85 +5,84 @@ import pytz
 import random
 
 # --- ১. প্রো কনফিগারেশন ---
-st.set_page_config(page_title="V39 FIXED PREDICT", layout="centered")
-SECURE_PASSWORD = "Arafat@Vip#Quantum2026"
+st.set_page_config(page_title="V41.1 COUNTDOWN", layout="centered")
 
-if 'auth' not in st.session_state: st.session_state.auth = False
-
-# --- ২. সিকিউরিটি গেট ---
-if not st.session_state.auth:
-    st.markdown("<style>.stApp { background-color: #000; text-align: center; color: #ffd700; }</style>", unsafe_allow_html=True)
-    st.markdown('<div style="padding:50px;"><h1>👑 V39 ELITE</h1><h3>FIXED 20s LOCK</h3></div>', unsafe_allow_html=True)
-    if st.text_input("মাস্টার পিন", type="password") == SECURE_PASSWORD:
-        st.session_state.auth = True; st.rerun()
-    st.stop()
-
-# --- ৩. মেইন স্টাইল ---
 st.markdown("""
     <style>
     #MainMenu, footer, header, .stDeployButton {visibility: hidden; display:none;}
     .stApp { background-color: #000; color: #ffd700; }
-    .display-card { border: 5px solid #ffd700; border-radius: 30px; padding: 40px; text-align: center; background: #000; transition: 0.5s; }
-    .market-header { font-size: 25px; font-weight: bold; color: #fff; margin-bottom: 10px; }
+    .stButton > button {
+        background-color: #111; color: #ffd700; border: 1px solid #333;
+        border-radius: 5px; font-size: 10px; width: 100%; height: 32px;
+    }
+    .display-card {
+        border: 4px solid #ffd700; border-radius: 20px;
+        padding: 20px; text-align: center; background: #000;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ৪. মার্কেট সিলেকশন (সরাসরি বাটন) ---
-market_list = [
-    {"n": "EUR/USD", "id": "EURUSD", "f": "🇪🇺🇺🇸"}, {"n": "GBP/USD", "id": "GBPUSD", "f": "🇬🇧🇺🇸"},
-    {"n": "USD/JPY", "id": "USDJPY", "f": "🇺🇸🇯🇵"}, {"n": "AUD/CAD", "id": "AUDCAD", "f": "🇦🇺🇨🇦"}
+# --- ২. ৪০টি মার্কেট লিস্ট ---
+markets = [
+    "EURUSD", "GBPUSD", "USDJPY", "AUDCAD", "EURJPY", "GBPJPY", "USDCAD", "NZDUSD",
+    "AUDUSD", "EURGBP", "EURAUD", "CHFJPY", "CADJPY", "AUDJPY", "GBPAUD", "GBPCHF",
+    "USDCHF", "EURNZD", "AUDCHF", "NZDJPY", "GBPCAD", "Eurchf", "CADCHF", "EURCAD",
+    "BTCUSD", "ETHUSD", "XAUUSD", "XAGUSD", "SOLUSD", "LTCUSD", "BNBUSD", "ADAUSD",
+    "USDTUSD", "DOGEUSD", "DOTUSD", "AVAXUSD", "MATICUSD", "SHIBUSD", "TRXUSD", "LINKUSD"
 ]
 
-if 'active_market' not in st.session_state: st.session_state.active_market = market_list[0]
+if 'm_choice' not in st.session_state: st.session_state.m_choice = "EURUSD"
 
-st.write("### 🎯 মার্কেট সিলেক্ট করুন:")
-cols = st.columns(len(market_list))
-for i, m in enumerate(market_list):
-    if cols[i].button(m['id']): st.session_state.active_market = m
+st.markdown("### 🎛️ SELECT MARKET (40)")
+cols = st.columns(4)
+for i, m in enumerate(markets):
+    if cols[i % 4].button(m): st.session_state.m_choice = m
 
-# --- ৫. স্থির লজিক ইঞ্জিন (২০ সেকেন্ড লক) ---
+# --- ৩. টাইম ও লজিক ---
 tz = pytz.timezone('Asia/Dhaka')
 now = datetime.now(tz)
 rem_sec = 60 - now.second
-cur_m = st.session_state.active_market
 
-# সিড সেট করা যাতে ওই ১ মিনিটের জন্য সিগন্যাল না পাল্টায়
-random.seed(now.minute + ord(cur_m['id'][0]))
+random.seed(now.minute + len(st.session_state.m_choice))
 score = random.randint(1, 500)
 
-sig_text = "ANALYZING..."
-status_col = "#ffd700"
-voice_cmd = ""
+status_col = "#ffd700"; sig = "WAITING"; v_text = ""
 
-# লজিক যখন ২০ সেকেন্ড বা তার নিচে আসবে
 if rem_sec <= 20:
-    if score >= 400:
-        sig_text, status_col = "BUY NEXT", "#00fbff"
-        voice_cmd = "পরবর্তী ক্যান্ডেলে বাই নিন"
-    elif score <= 100:
-        sig_text, status_col = "SELL NEXT", "#ff4b4b"
-        voice_cmd = "পরবর্তী ক্যান্ডেলে সেল নিন"
+    if score >= 380:
+        sig = "BUY NEXT"; status_col = "#00fbff"; v_text = "বাই নিন"
+    elif score <= 120:
+        sig = "SELL NEXT"; status_col = "#ff4b4b"; v_text = "সেল নিন"
     else:
-        sig_text, status_col = "DANGER", "#ff0000"
-        voice_cmd = "মার্কেট বিপজ্জনক, ট্রেড নিবেন না"
+        sig = "DANGER"; status_col = "#ff0000"; v_text = "বিপদ"
 else:
-    sig_text = "SCANNING..."
-    status_col = "#ffd700"
+    sig = "SCANNING"; status_col = "#ffd700"
 
-# --- ৬. ভয়েস অ্যালার্ট (ঠিক ২০ সেকেন্ডে একবার) ---
-if rem_sec == 20:
-    st.markdown(f'<iframe src="https://translate.google.com/translate_tts?ie=UTF-8&q={voice_cmd.replace(" ", "%20")}&tl=bn&client=tw-ob" allow="autoplay" style="display:none;"></iframe>', unsafe_allow_html=True)
-
-# --- ৭. ডিসপ্লে ইন্টারফেস ---
+# --- ৪. ডিসপ্লে ---
 st.markdown(f"""
-    <div class='display-card' style='border-color: {status_col};'>
-        <div class='market-header'>{cur_m['f']} {cur_m['n']}</div>
-        <div style='font-size: 120px; font-weight: 900; line-height: 1; color: {status_col};'>{rem_sec}s</div>
-        <div style='font-size: 45px; font-weight: bold; margin-top: 20px; color: {status_col};'>{sig_text}</div>
-        <hr style='border: 1px solid {status_col}33; margin: 20px 0;'>
-        <div style='font-size: 16px; opacity: 0.8;'>২০ সেকেন্ডে সিগন্যাল লক হবে। স্কয়ার স্কোর: {score}</div>
+    <div class="display-card" style="border-color: {status_col};">
+        <div style="font-size: 18px; color: #fff;">{st.session_state.m_choice} (OTC)</div>
+        <div style="font-size: 110px; font-weight: 900; color: {status_col}; line-height:1;">{rem_sec}s</div>
+        <div style="font-size: 40px; font-weight: bold; color: {status_col};">{sig}</div>
     </div>
 """, unsafe_allow_html=True)
+
+# --- ৫. স্মার্ট ভয়েস ও কাউন্টডাউন সিস্টেম ---
+voice_command = ""
+
+# ঠিক ২০ সেকেন্ডে মেইন অ্যালার্ট
+if rem_sec == 20:
+    voice_command = f"পরবর্তী ক্যান্ডেলে {v_text} এর জন্য তৈরি হোন।"
+
+# শেষ ১০ সেকেন্ডে কাউন্টডাউন (১০ থেকে ১)
+elif rem_sec <= 10 and rem_sec > 0 and sig != "SCANNING" and sig != "DANGER":
+    voice_command = str(rem_sec)
+
+# ভয়েস প্লেয়ার
+if voice_command != "":
+    st.markdown(f'<iframe src="https://translate.google.com/translate_tts?ie=UTF-8&q={voice_command.replace(" ", "%20")}&tl=bn&client=tw-ob" allow="autoplay" style="display:none;"></iframe>', unsafe_allow_html=True)
+    if rem_sec <= 10: # শেষ ১০ সেকেন্ডে ভাইব্রেশন
+        st.components.v1.html("<script>window.navigator.vibrate(100);</script>", height=0)
 
 time.sleep(1)
 st.rerun()
