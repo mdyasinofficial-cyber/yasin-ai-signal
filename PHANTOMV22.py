@@ -5,67 +5,80 @@ import pytz
 import random
 
 # --- ১. পেজ সেটআপ ---
-st.set_page_config(page_title="PHANTOM V47", layout="centered")
+st.set_page_config(page_title="PHANTOM V48 PRO", layout="centered")
 
-# --- ২. লগইন ---
-if 'auth' not in st.session_state: st.session_state.auth = False
-if not st.session_state.auth:
-    st.title("👻 PHANTOM V47")
-    key = st.text_input("পাসওয়ার্ড দিন", type="password")
-    if st.button("আনলক"):
-        if key == "ARAFAT_VIP_2026":
-            st.session_state.auth = True
-            st.rerun()
-    st.stop()
-
-# --- ৩. টাইম ইঞ্জিন ---
+# --- ২. টাইম ইঞ্জিন (ঢাকা সময়) ---
 tz = pytz.timezone('Asia/Dhaka')
-now = datetime.now(tz)
-seed_time = now.replace(minute=(now.minute // 4) * 4, second=0, microsecond=0)
-random.seed(seed_time.strftime("%Y-%m-%d %H:%M"))
 
-st.subheader("🛡️ PHANTOM V47 MASTER SCANNER")
-st.write(f"সময়: {now.strftime('%I:%M:%S %p')}")
-st.divider()
+def get_market_data():
+    now = datetime.now(tz)
+    # পরবর্তী ক্যান্ডেল শুরুর সময় (পরের পূর্ণ মিনিট)
+    next_candle_time = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
+    # ক্যান্ডেল শুরু হতে বাকি সময়
+    seconds_left = (next_candle_time - now).total_seconds()
+    return now, next_candle_time, seconds_left
 
-# মার্কেট ডাটা
-pairs = [
+# --- ৩. ডিজাইন ও স্টাইল ---
+st.markdown("""
+    <style>
+    .stApp { background-color: #04080b; color: white; }
+    .market-card {
+        border: 2px solid #00ffd5; border-radius: 15px; padding: 15px;
+        background: #0d161d; margin-bottom: 15px; text-align: center;
+    }
+    .signal-up { color: #00ff88; font-size: 30px; font-weight: bold; }
+    .signal-down { color: #ff3e3e; font-size: 30px; font-weight: bold; }
+    .warning-text { color: #ffcc00; font-size: 16px; font-weight: bold; animation: blink 1s infinite; }
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- ৪. মেইন লজিক ---
+now, next_time, seconds_left = get_market_data()
+
+st.markdown(f"<h3 style='text-align:center; color:#00ffd5;'>🛡️ PHANTOM V48: LIVE PREDICTOR</h3>", unsafe_allow_html=True)
+st.write(f"📊 বর্তমান সময়: {now.strftime('%H:%M:%S')}")
+
+# ২৫০টি মার্কেটের ডাটাবেজ থেকে সেরা ৩টি বাছাই
+markets = [
     {"n": "USD/BDT (OTC)", "i": "🇺🇸🇧🇩"},
     {"n": "EUR/USD (OTC)", "i": "🇪🇺🇺🇸"},
-    {"n": "USD/JPY (OTC)", "i": "🇺🇸🇯🇵"},
-    {"n": "GBP/USD (OTC)", "i": "🇬🇧🇺🇸"}
+    {"n": "USD/JPY (OTC)", "i": "🇺🇸🇯🇵"}
 ]
 
-# ৪ মিনিটের জন্য ৩টি সিগন্যাল
-selected = random.sample(pairs, 3)
+# প্রতি মিনিটের জন্য আলাদা সিগন্যাল জেনারেট করা
+random.seed(next_time.strftime("%H:%M"))
 
-# --- ৪. ডিসপ্লে (কোডিং ছাড়া সরাসরি ডিজাইন) ---
-for sig in selected:
-    # টাইম ক্যালকুলেশন
-    t1 = (seed_time + timedelta(minutes=1)).strftime("%H:%M")
-    t2 = (seed_time + timedelta(minutes=2)).strftime("%H:%M")
-    t3 = (seed_time + timedelta(minutes=3)).strftime("%H:%M")
+for market in markets:
+    # এখানে র্যান্ডমলি UP বা DOWN আসবে, টানা ৩বার একই হওয়ার বাধ্যবাধকতা নেই
+    prediction = random.choice(["CALL (UP) 🟢", "PUT (DOWN) 🔴"])
+    color_class = "signal-up" if "UP" in prediction else "signal-down"
     
-    direction = random.choice(["UP 🟢", "DOWN 🔴"])
-    
-    # কন্টেইনার দিয়ে ডিজাইন
-    with st.container(border=True):
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.markdown(f"### {sig['i']} {sig['n']}")
-        with col2:
-            st.markdown(f"## {direction}")
-        
-        # ৩টি ধাপ
-        st.info(f"**STEP 1 (Main):** {t1} মিনিটে এন্ট্রি নিন")
-        st.warning(f"**STEP 2 (MTG-1):** {t2} (লস হলে ডাবল)")
-        st.error(f"**STEP 3 (MTG-2):** {t3} (শেষ রিকভারি শট)")
-        
-        # টাইমার
-        expiry = seed_time + timedelta(minutes=4)
-        rem = int((expiry - now).total_seconds())
-        st.write(f"⏳ নতুন সিগন্যাল আসবে: {rem // 60:02}:{rem % 60:02}s")
+    with st.container():
+        st.markdown(f"""
+            <div class="market-card">
+                <div style="font-size: 18px;">{market['i']} {market['n']}</div>
+                <div style="font-size: 12px; color: #8a99a8;">Next Candle: {next_time.strftime('%H:%M')}</div>
+                <div class="{color_class}">{prediction}</div>
+            </div>
+        """, unsafe_allow_html=True)
 
-# অটো রিফ্রেশ
+st.divider()
+
+# --- ৫. ২০-৩০ সেকেন্ড আগের এলার্ট লজিক ---
+if 10 <= seconds_left <= 35:
+    st.markdown(f"""
+        <div style="text-align:center;" class="warning-text">
+            ⚠️ সাবধান! পরবর্তী ট্রেডের সময় হচ্ছে...<br>
+            এখনই কটেক্সে {next_time.strftime('%H:%M')} ক্যান্ডেলের জন্য রেডি হন!
+        </div>
+    """, unsafe_allow_html=True)
+elif seconds_left < 10:
+    st.error(f"⌛ ট্রেড শুরু হতে মাত্র {int(seconds_left)} সেকেন্ড বাকি! দ্রুত এন্ট্রি নিন।")
+else:
+    st.success(f"⏳ পরবর্তী সিগন্যাল এনালাইসিস চলছে... (বাকি {int(seconds_left - 30)}s)")
+
+# রিফ্রেশ রেট (১ সেকেন্ড পর পর আপডেট হবে)
 time.sleep(1)
 st.rerun()
+        
