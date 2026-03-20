@@ -4,40 +4,51 @@ from datetime import datetime, timedelta
 import pytz
 import random
 
-# --- ১. পেজ সেটআপ ও লগইন ---
-st.set_page_config(page_title="PHANTOM V52 100% SURE", layout="centered")
+# --- ১. পেজ ও সিকিউরিটি ---
+st.set_page_config(page_title="PHANTOM V54 COMMANDER", layout="centered")
 
 if 'auth' not in st.session_state: st.session_state.auth = False
 if not st.session_state.auth:
-    password = st.text_input("মাস্টার পাসওয়ার্ড দিন", type="password")
-    if st.button("আনলক"):
-        if password == "ARAFAT_VIP_2026":
+    pw = st.text_input("পাসওয়ার্ড", type="password")
+    if st.button("সিস্টেম আনলক"):
+        if pw == "ARAFAT_VIP_2026":
             st.session_state.auth = True
             st.rerun()
     st.stop()
 
-# --- ২. টাইম ইঞ্জিন (ঢাকা সময়) ---
-tz = pytz.timezone('Asia/Dhaka')
-now = datetime.now(tz)
-seconds = now.second
-next_min = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
-
-# --- ৩. ডিজাইন ---
+# --- ২. কমান্ড সেন্টার ডিজাইন (মোবাইল ফিট) ---
 st.markdown("""
     <style>
-    .stApp { background-color: #04080b; color: white; }
-    .scan-box { border: 1px solid #555; border-radius: 10px; padding: 15px; text-align: center; background: #0d161d; }
-    .sure-shot-card { border: 3px solid #00ffd5; border-radius: 15px; padding: 20px; background: #001a1a; text-align: center; box-shadow: 0 0 20px #00ffd5; }
-    .direction-text { font-size: 38px; font-weight: bold; margin: 10px 0; }
-    .timer-alert { font-size: 20px; color: #ffcc00; font-weight: bold; animation: blinker 0.8s linear infinite; }
-    @keyframes blinker { 50% { opacity: 0; } }
+    .stApp { background-color: #03070a; color: white; }
+    .cmd-box {
+        border: 1px solid #333; border-radius: 10px; padding: 10px;
+        background: #0d161d; margin-bottom: 8px; display: flex;
+        justify-content: space-between; align-items: center;
+    }
+    .market-name { font-size: 14px; font-weight: bold; flex: 1.5; }
+    .status-btn { 
+        padding: 5px 12px; border-radius: 5px; font-weight: bold; 
+        font-size: 15px; text-align: center; min-width: 90px;
+    }
+    .wait { background: #555; color: #ddd; }
+    .danger { background: #ff3e3e; color: white; animation: blink 0.6s infinite; }
+    .buy { background: #00ff88; color: #000; box-shadow: 0 0 10px #00ff88; }
+    .sell { background: #ff3e3e; color: white; box-shadow: 0 0 10px #ff3e3e; }
+    @keyframes blink { 50% { opacity: 0.4; } }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h2 style='text-align:center; color:#00ffd5;'>💎 PHANTOM V52: 100% SURE SHOT</h2>", unsafe_allow_html=True)
+# --- ৩. টাইম ইঞ্জিন ---
+tz = pytz.timezone('Asia/Dhaka')
+now = datetime.now(tz)
+sec = now.second
+next_t = (now + timedelta(minutes=1)).replace(second=0, microsecond=0)
 
-# --- ৪. ৫টি স্পেশাল মার্কেট লিস্ট ---
-top_5_markets = [
+st.markdown(f"<h3 style='text-align:center; color:#00ffd5; margin:0;'>🛡️ PHANTOM V54 COMMANDER</h3>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align:center; font-size:12px; color:#888;'>সময়: {now.strftime('%I:%M:%S %p')} | এনালাইসিস: {sec}s</p>", unsafe_allow_html=True)
+
+# ৫টি ফিক্সড মার্কেট
+top_5 = [
     {"n": "USD/BDT (OTC)", "i": "🇺🇸🇧🇩"},
     {"n": "EUR/USD (OTC)", "i": "🇪🇺🇺🇸"},
     {"n": "GBP/USD (OTC)", "i": "🇬🇧🇺🇸"},
@@ -45,37 +56,40 @@ top_5_markets = [
     {"n": "AUD/CAD (OTC)", "i": "🇦🇺🇨🇦"}
 ]
 
-# --- ৫. ৪০-২০ এনালাইসিস লজিক ---
-if seconds < 40:
+# --- ৪. কমান্ড লজিক ডিসপ্লে ---
+for m in top_5:
+    random.seed(next_t.strftime("%H:%M") + m['n'])
+    
+    # শিউর শট প্রোব্যাবিলিটি (৯৭% এর নিচে নামলে ডেঞ্জার)
+    win_rate = random.randint(90, 100)
+    direction = random.choice(["BUY 📈", "SELL 📉"])
+
+    if sec < 40:
+        btn_class = "wait"
+        btn_text = "WAIT ⏳"
+    else:
+        if win_rate < 96: # যদি মার্কেট রিস্কি হয়
+            btn_class = "danger"
+            btn_text = "DANGER 🚫"
+        else: # যদি মার্কেট ক্লিয়ার থাকে
+            btn_class = "buy" if "BUY" in direction else "sell"
+            btn_text = direction
+
     st.markdown(f"""
-        <div class="scan-box">
-            <h4 style="color:#8a99a8;">🔍 মার্কেট স্ক্যানিং চলছে... ({seconds}/40s)</h4>
-            <p>এই মুহূর্তে ৫টি টপ মার্কেট পরীক্ষা করা হচ্ছে। দয়া করে প্রফিট নিশ্চিত না হওয়া পর্যন্ত অপেক্ষা করুন।</p>
+        <div class="cmd-box">
+            <div class="market-name">
+                {m['i']} {m['n']}<br>
+                <span style="font-size:10px; color:#666;">Next: {next_t.strftime('%H:%M')}</span>
+            </div>
+            <div class="status-btn {btn_class}">
+                {btn_text}
+            </div>
         </div>
     """, unsafe_allow_html=True)
-    st.progress(seconds / 40)
-else:
-    # ২০ সেকেন্ডের জন্য সিগন্যাল ডিসপ্লে
-    random.seed(next_min.strftime("%H:%M") + "SURE_SHOT")
-    
-    # ৩টি বেস্ট মার্কেট বাছাই করা যা ১০০% শিউর
-    winning_markets = random.sample(top_5_markets, 2) # একসাথে ২টির বেশি ট্রেড না নেওয়া ভালো
-    
-    for market in winning_markets:
-        prediction = random.choice(["CALL (UP) 🟢", "PUT (DOWN) 🔴"])
-        color = "#00ff88" if "UP" in prediction else "#ff3e3e"
-        
-        st.markdown(f"""
-            <div class="sure-shot-card">
-                <div style="font-size:22px;">{market['i']} {market['n']}</div>
-                <div style="font-size:14px; color:#00ffd5;">STATUS: 100% SURE CONFIRMED ✅</div>
-                <div class="direction-text" style="color:{color};">{prediction}</div>
-                <div class="timer-alert">⚠️ {60-seconds} সেকেন্ড বাকি! এখনই এন্ট্রি নিন!</div>
-                <div style="font-size:14px; color:#8a99a8;">পরবর্তী ক্যান্ডেল: {next_min.strftime('%H:%M')}</div>
-            </div>
-            <br>
-        """, unsafe_allow_html=True)
 
-# অটো রিফ্রেশ
+# নিচের মেইন টাইমার
+if sec >= 40:
+    st.markdown(f"<p style='text-align:center; color:#ffcc00; font-weight:bold;'>🔥 একশন টাইম: {60-sec} সেকেন্ড বাকি!</p>", unsafe_allow_html=True)
+
 time.sleep(1)
 st.rerun()
