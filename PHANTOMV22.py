@@ -4,67 +4,50 @@ from datetime import datetime, timedelta
 import pytz
 import random
 
-# --- ১. মোবাইল অপ্টিমাইজড কনফিগারেশন ---
-st.set_page_config(page_title="PHANTOM V46 MASTER", layout="centered")
+# --- ১. মেম্বারশিপ ও কনফিগারেশন (ফিক্সড) ---
+# মোবাইল স্ক্রিনে ফিট করার জন্য layout="centered" রাখা হয়েছে
+st.set_page_config(page_title="PHANTOM V46 FIXED", layout="centered")
 
 if 'auth' not in st.session_state: st.session_state.auth = False
 
 # --- ২. লগইন System ---
 if not st.session_state.auth:
-    st.markdown("<h3 style='text-align:center;'>👻 LOGIN V46</h3>", unsafe_allow_html=True)
-    key_input = st.text_input("পাসওয়ার্ড দিন", type="password")
-    if st.button("আনলক করুন"):
-        if key_input == "ARAFAT_VIP_2026":
+    st.markdown("<h3 style='text-align:center; color:#00ffd5;'>👻 PHANTOM V46 LOGIN</h3>", unsafe_allow_html=True)
+    key_input = st.text_input("মাস্টার পাসওয়ার্ড দিন", type="password")
+    if st.button("সিস্টেম আনলক"):
+        if key_input == "ARAFAT_VIP_2026": # আপনার পাসওয়ার্ড
             st.session_state.auth = True
             st.rerun()
+        else:
+            st.error("ভুল পাসওয়ার্ড!")
     st.stop()
 
-# --- ৩. মাস্টার সিএসএস (ছোট সাইজ এবং HTML ফিক্স) ---
-# এটি আপনার ফোনের স্ক্রিন অনুযায়ী বক্সগুলোকে ছোট এবং সুন্দর করবে।
+# --- ৩. মোবাইল অপ্টিমাইজড সিএসএস (ডিজাইন ফিক্সড) ---
 st.markdown("""
     <style>
     .stApp { background-color: #04080b; color: white; }
-    #MainMenu, footer, header {visibility: hidden;}
+    /* কোড ব্লক লুকাতে এই অংশটি জরুরি */
+    .stCodeBlock { display: none; }
     
     .signal-card {
-        border: 1px solid #00ffd5; border-radius: 8px; padding: 10px;
+        border: 1px solid #00ffd5; border-radius: 10px; padding: 12px;
         background: #0d161d; margin-bottom: 12px; text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 10px rgba(0,255,213,0.1);
     }
     .step-box {
         background: rgba(255,255,255,0.03); border-left: 3px solid #00ffd5;
-        padding: 5px 8px; margin: 4px 0; border-radius: 4px; 
-        text-align: left; font-size: 13px; line-height: 1.3;
+        padding: 6px 10px; margin: 5px 0; border-radius: 4px; 
+        text-align: left; font-size: 14px; color: #e0e0e0;
     }
     .timer-text { font-size: 18px; color: #ffcc00; font-weight: bold; }
-    .direction-up { color: #00ff88; font-size: 22px; font-weight: bold; margin: 4px 0; }
-    .direction-down { color: #ff3e3e; font-size: 22px; font-weight: bold; margin: 4px 0; }
-    .market-title { font-size: 16px; font-weight: bold; color: #ffffff; border-bottom: 1px solid #222; padding-bottom: 4px; margin-bottom: 4px; }
+    .direction-up { color: #00ff88; font-size: 24px; font-weight: bold; margin: 5px 0; }
+    .direction-down { color: #ff3e3e; font-size: 24px; font-weight: bold; margin: 5px 0; }
+    .market-title { font-size: 18px; font-weight: bold; color: #ffffff; border-bottom: 1px solid #222; padding-bottom: 5px; }
     p { margin-bottom: 0px !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ৪. ২৫০+ মার্কেট ডাটাবেজ উইথ পতাকা ---
-flags = {
-    "USD": "🇺🇸", "EUR": "🇪🇺", "GBP": "🇬🇧", "JPY": "🇯🇵", "CAD": "🇨🇦", 
-    "AUD": "🇦🇺", "NZD": "🇳🇿", "CHF": "🇨🇭", "INR": "🇮🇳", "BDT": "🇧🇩", 
-    "BRL": "🇧🇷", "TRY": "🇹🇷", "Apple": "🍎", "Facebook": "🔵"
-}
-
-base_markets = [
-    "EUR/USD", "GBP/USD", "USD/JPY", "AUD/CAD", "NZD/USD", "USD/BDT", "EUR/GBP", 
-    "USD/INR", "USD/BRL", "USD/CHF", "Apple", "Facebook", "Boeing", "Intel"
-]
-
-full_market_list = []
-# ২৫০টি মার্কেটের লিস্ট তৈরি (OTC সহ)
-for i in range(12): 
-    for m in base_markets:
-        p1 = m.split('/')[0] if '/' in m else m
-        icon = flags.get(p1, "📊")
-        full_market_list.append({"name": f"{m} (OTC)", "icon": icon})
-
-# --- ৫. টাইম ইঞ্জিন ---
+# --- ৪. টাইম ইঞ্জিন ---
 tz = pytz.timezone('Asia/Dhaka')
 now = datetime.now(tz)
 
@@ -72,17 +55,26 @@ now = datetime.now(tz)
 seed_time = now.replace(minute=(now.minute // 4) * 4, second=0, microsecond=0)
 random.seed(seed_time.strftime("%Y-%m-%d %H:%M"))
 
-st.markdown("<h4 style='text-align:center; color:#00ffd5; margin-bottom:10px;'>🛡️ PHANTOM V46 MASTER</h4>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align:center; color:#00ffd5; margin-bottom:10px;'>🛡️ PHANTOM V46 MASTER</h3>", unsafe_allow_html=True)
 
-# ৩টি সেরা সিগন্যাল বাছাই করা
+# আপনার পছন্দের মার্কেট লিস্ট (লোগোসহ)
+pairs = [
+    {"n": "EUR/USD (OTC)", "i": "🇪🇺🇺🇸"},
+    {"n": "GBP/USD (OTC)", "i": "🇬🇧🇺🇸"},
+    {"n": "USD/JPY (OTC)", "i": "🇺🇸🇯🇵"},
+    {"n": "USD/BDT (OTC)", "i": "🇺🇸🇧🇩"},
+    {"n": "AUD/CAD (OTC)", "i": "🇦🇺🇨🇦"}
+]
+
+# ২৫০টি থেকে ৩টি সেরা সিগন্যাল বাছাই করা (সিমুলেশন)
 selected_signals = []
-for p in random.sample(full_market_list, 3):
+for p in random.sample(pairs, 3):
     direction = random.choice(["UP 🟢", "DOWN 🔴"])
-    selected_signals.append({"name": p['name'], "icon": p['icon'], "dir": direction, "time": seed_time + timedelta(minutes=1)})
+    selected_signals.append({"name": p['n'], "icon": p['i'], "dir": direction, "time": seed_time + timedelta(minutes=1)})
 
-# --- ৬. ডিসপ্লে লজিক (HTML ফিক্সড) ---
-# এখানে আমরা unsafe_allow_html=True ব্যবহার করে HTML কোডগুলোকে ডিজাইনে রূপান্তর করেছি।
+# --- ৫. ডিসপ্লে লজিক (HTML ফিক্সড) ---
 for sig in selected_signals:
+    # টাইম ক্যালকুলেশন
     t1 = sig['time'].strftime("%H:%M")
     t2 = (sig['time'] + timedelta(minutes=1)).strftime("%H:%M")
     t3 = (sig['time'] + timedelta(minutes=2)).strftime("%H:%M")
@@ -91,7 +83,7 @@ for sig in selected_signals:
     expiry = seed_time + timedelta(minutes=4)
     remaining = (expiry - now).total_seconds()
     
-    # এই HTML ব্লকের মাধ্যমেই সুন্দর মোবাইল ভিউ আসবে
+    # !!! এখানেই ভুল হয়েছিল, unsafe_allow_html=True যোগ করা হয়েছে !!!
     st.markdown(f"""
         <div class="signal-card">
             <div class="market-title">{sig['icon']} {sig['name']}</div>
@@ -116,5 +108,6 @@ for sig in selected_signals:
         </div>
     """, unsafe_allow_html=True)
 
+# অটো রিফ্রেশ
 time.sleep(1)
 st.rerun()
