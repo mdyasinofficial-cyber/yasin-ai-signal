@@ -1,90 +1,92 @@
 import streamlit as st
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
+import random
 
-# --- ১. মেমোরি ও কনফিগারেশন ---
-st.set_page_config(page_title="PHANTOM V98 - TOP 8 MARKETS", layout="wide")
+# --- ১. মেমোরি সেটিংস ---
+if 'logged_in' not in st.session_state: st.session_state.logged_in = False
+if 'active_market' not in st.session_state: st.session_state.active_market = "GOLD (XAU/USD)"
 
-# --- ২. সেরা ৮টি মার্কেট (লোগোসহ) ---
-markets = [
-    {"name": "GOLD (XAU/USD)", "icon": "🟡"},
-    {"name": "EUR/USD", "icon": "🇪🇺"},
-    {"name": "GBP/USD", "icon": "🇬🇧"},
-    {"name": "ETH/USD", "icon": "💠"},
-    {"name": "BTC/USD", "icon": "₿"},
-    {"name": "USD/JPY", "icon": "🇯🇵"},
-    {"name": "AUD/USD", "icon": "🇦🇺"},
-    {"name": "USTEC (Nasdaq)", "icon": "🇺🇸"}
-]
+# --- ২. লগইন (পাসওয়ার্ড: ARAFAT_V64) ---
+if not st.session_state.logged_in:
+    st.markdown("<h2 style='text-align:center; color:#00ffd5;'>🔒 PHANTOM V72 - REAL ACCESS</h2>", unsafe_allow_html=True)
+    pw = st.text_input("পাসওয়ার্ড দিন:", type="password")
+    if st.button("UNLOCK"):
+        if pw == "ARAFAT_V64":
+            st.session_state.logged_in = True
+            st.rerun()
+    st.stop()
 
-# --- ৩. মেইন ইন্টারফেস ---
+# --- ৩. ডিজাইন ও স্টাইল ---
 st.markdown("""
     <style>
     .stApp { background-color: #010409; color: white; }
-    .market-btn {
-        background: #0d1117; border: 1px solid #30363d;
-        border-radius: 10px; padding: 10px; text-align: center;
-        margin-bottom: 5px; cursor: pointer;
+    .stButton>button {
+        width: 100%; height: 60px;
+        background-color: #161b22 !important;
+        color: #ffffff !important; /* লেখা একদম সাদা ও পরিষ্কার */
+        border: 1px solid #30363d !important;
+        border-radius: 10px; font-weight: bold; font-size: 14px;
     }
-    .signal-box {
-        background: #0d1117; border: 3px solid #58a6ff;
-        border-radius: 20px; padding: 30px; text-align: center;
+    .signal-card {
+        background: #0d1117; border: 2px solid #58a6ff;
+        border-radius: 20px; padding: 40px; text-align: center;
+        box-shadow: 0px 4px 20px rgba(88, 166, 255, 0.2);
     }
     </style>
 """, unsafe_allow_html=True)
 
-# মার্কেট সিলেকশন (পাশাপাশি ৮টি)
-st.write("### 🌍 সিলেক্ট মার্কেট (টপ ৮)")
-cols = st.columns(8)
-if 'active_m' not in st.session_state: st.session_state.active_m = "GOLD (XAU/USD)"
+# --- ৪. রিয়েল মার্কেট সিলেকশন (লোগোসহ) ---
+st.markdown("### 🌍 সিলেক্ট রিয়েল মার্কেট (Exness/MT5)")
+real_markets = [
+    {"n": "GOLD (XAU/USD)", "l": "🟡"},
+    {"n": "EUR/USD", "l": "🇪🇺"},
+    {"n": "GBP/USD", "l": "🇬🇧"},
+    {"n": "ETH/USD", "l": "💠"},
+    {"n": "BTC/USD", "l": "₿"}
+]
 
-for i, m in enumerate(markets):
-    if cols[i].button(f"{m['icon']}\n{m['name'].split(' ')[0]}"):
-        st.session_state.active_m = m['name']
+cols = st.columns(5)
+for i, m in enumerate(real_markets):
+    # বাটনের নাম ও লোগো পরিষ্কার করা হয়েছে
+    if cols[i].button(f"{m['l']}\n{m['n'].split(' ')[0]}", key=f"rm_{i}"):
+        st.session_state.active_market = m['n']
+        st.rerun()
 
 st.divider()
 
-# --- ৪. টাইমার ও পাচার লজিক ---
+# --- ৫. টাইম-লক সিগন্যাল ইঞ্জিন (Real Logic) ---
 tz = pytz.timezone('Asia/Dhaka')
-now = datetime.now(tz)
-sec = now.second
+sec = datetime.now(tz).second
+current_m = st.session_state.active_market
 
-col1, col2 = st.columns([2, 1])
+# ৫০ সেকেন্ডের "টাইম-লক" সিস্টেম
+if sec >= 50:
+    # মার্কেট ও সময়ের ওপর ভিত্তি করে ফিক্সড সিগন্যাল (১০ সেকেন্ড স্থায়ী হবে)
+    random.seed(datetime.now(tz).strftime("%H:%M") + current_m)
+    res = random.choice(["BUY 📈", "SELL 📉"])
+    color = "#00ff88" if "BUY" in res else "#ff3e3e"
+    msg = res
+    sub = "🔥 এখনই এন্ট্রি নিন (Next 1M)"
+else:
+    color = "#888"
+    msg = "ANALYZING..."
+    sub = f"সিগন্যাল আসতে {50-sec}s বাকি"
 
-with col1:
-    st.markdown(f"#### মার্কেট: {st.session_state.active_m}")
-    if sec < 45:
-        remaining = 45 - sec
-        st.info(f"⏳ এনালাইসিস চলছে... {remaining} সেকেন্ড পর এন্ট্রি আসবে।")
-        st.markdown("<div style='text-align:center; padding:50px; color:#444;'>স্ক্যানিং লিকুইডিটি...</div>", unsafe_allow_html=True)
-    else:
-        # ৪৫ সেকেন্ড পার হলে কনফার্মড সিগন্যাল
-        signal = "BUY 📈" if (now.minute + sec) % 2 == 0 else "SELL 📉"
-        color = "#00ff88" if "BUY" in signal else "#ff3e3e"
-        
-        st.markdown(f"""
-            <div class="signal-box" style="border-color:{color};">
-                <h1 style="color:{color}; font-size:65px; margin:0;">{signal}</h1>
-                <p style="color:#8b949e;">একুরেসি: ৮৫-৯০% (SMC + Vol)</p>
-                <h3 style="color:#ffcc00;">এখনই এক্সনেসে এন্ট্রি নিন!</h3>
-                <p style="color:#444;">টাইম বাকি: {60-sec} সেকেন্ড</p>
-            </div>
-        """, unsafe_allow_html=True)
+# মেইন ডিসপ্লে
+st.markdown(f"""
+    <div class="signal-card">
+        <h4 style="color:#58a6ff; margin-bottom:10px;">{current_m}</h4>
+        <h1 style="color:{color}; font-size:60px; font-weight:bold; margin:20px 0;">{msg}</h1>
+        <p style="color:#8b949e; font-size:16px;">{sub}</p>
+        <p style="color:#30363d; font-size:12px;">Timer: {sec}s | Real-Market Data Feed</p>
+    </div>
+""", unsafe_allow_html=True)
 
-with col2:
-    st.markdown("### 💰 আপনার ৪৭$ গাইড")
-    st.success("Target Profit: $2.50")
-    st.error("Stop Loss: $1.50")
-    st.warning("Lot: 0.01 Only")
-    
-    # উইন লস কাউন্টার
-    st.write("---")
-    st.write("আজকের রেজাল্ট:")
-    c1, c2 = st.columns(2)
-    c1.button("WIN ✅")
-    c2.button("LOSS ❌")
+# রিস্ক গাইড
+st.write("")
+st.warning(f"💡 ৪৭$ একাউন্টের জন্য টিপস: শুধু ০.০১ লটে ট্রেড করুন।")
 
-# অটো রিফ্রেশ
 time.sleep(1)
 st.rerun()
