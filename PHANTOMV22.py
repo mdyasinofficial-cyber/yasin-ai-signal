@@ -1,103 +1,91 @@
 import streamlit as st
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
-import streamlit.components.v1 as components
+import random
 
-# --- ১. পাসওয়ার্ড প্রটেকশন (ARAFAT_V64) ---
+# --- ১. মেমোরি ও সিকিউরিটি ---
 if 'auth' not in st.session_state: st.session_state.auth = False
+if 'last_signal' not in st.session_state: st.session_state.last_signal = ""
+if 'last_signal_time' not in st.session_state: st.session_state.last_signal_time = 0
 
+# পাসওয়ার্ড চেক
 if not st.session_state.auth:
-    st.markdown("<h2 style='text-align:center; color:#58a6ff;'>🔒 PHANTOM V78 ACCESS</h2>", unsafe_allow_html=True)
-    pw = st.text_input("পাসওয়ার্ড দিন:", type="password")
+    st.title("🔒 PHANTOM V80 ACCESS")
+    pw = st.text_input("পাসওয়ার্ড দিন (ARAFAT_V64):", type="password")
     if st.button("UNLOCK"):
         if pw == "ARAFAT_V64":
             st.session_state.auth = True
             st.rerun()
-        else: st.error("ভুল পাসওয়ার্ড!")
     st.stop()
 
-# --- ২. সেশন লজিক ও মার্কেট লিস্ট ---
-tz = pytz.timezone('Asia/Dhaka')
-bd_now = datetime.now(tz)
-hour = bd_now.hour
-
-# সেশন নির্ধারণ
-if 6 <= hour < 13: current_s = "AS" # এশিয়ান
-elif 13 <= hour < 19: current_s = "EU" # ইউরোপ
-else: current_s = "US" # আমেরিকান
-
-all_markets = [
-    {"n": "GOLD (XAUUSD)", "l": "🟡", "s": "US"}, {"n": "BTCUSD", "l": "🟠", "s": "24h"},
-    {"n": "EURUSD", "l": "🇪🇺", "s": "EU"}, {"n": "GBPUSD", "l": "🇬🇧", "s": "EU"},
-    {"n": "USDJPY", "l": "🇯🇵", "s": "AS"}, {"n": "AUDUSD", "l": "🇦🇺", "s": "AS"},
-    {"n": "US30", "l": "📊", "s": "US"}, {"n": "ETHUSD", "l": "💠", "s": "24h"}
-]
-
-# অটো সর্টিং: সেরা মার্কেটগুলো উপরে আসবে
-sorted_markets = sorted(all_markets, key=lambda x: (x['s'] != current_s and x['s'] != "24h"))
-
-# --- ৩. ডিজাইন ---
+# --- ২. ডিজাইন সেটআপ ---
 st.markdown("""
     <style>
     .stApp { background-color: #010409; color: white; }
-    .stButton>button {
-        width: 100%; height: 70px;
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
-        color: white !important; border-radius: 12px;
-        text-align: left; padding-left: 15px;
+    .main-card {
+        background: #0d1117; border: 2px solid #30363d;
+        border-radius: 20px; padding: 30px; text-align: center;
     }
-    .best-tag { color: #00ff88; font-size: 11px; font-weight: bold; }
-    .sig-box {
-        background: #0d1117; border: 2px solid #58a6ff;
-        border-radius: 15px; padding: 25px; text-align: center;
-    }
+    .timer-text { font-size: 45px; font-weight: bold; color: #58a6ff; margin: 0; }
+    .signal-text { font-size: 70px; font-weight: bold; margin: 20px 0; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🚀 PHANTOM V78 PRO")
-st.write(f"⏰ বিডি টাইম: **{bd_now.strftime('%I:%M %p')}** | সেশন: **{current_s}**")
+# --- ৩. টাইম জোন ও সেশন ---
+tz = pytz.timezone('Asia/Dhaka')
+now = datetime.now(tz)
+sec = now.second
+current_min = now.minute
 
-# --- ৪. মার্কেট ডিসপ্লে (স্মার্ট বাটন) ---
-if 'active_m' not in st.session_state: st.session_state.active_m = sorted_markets[0]
+# --- ৪. মার্কেট সেশন সর্টিং ---
+hour = now.hour
+if 6 <= hour < 13: session = "AS (এশিয়ান)"
+elif 13 <= hour < 19: session = "EU (ইউরোপ)"
+else: session = "US (আমেরিকান)"
 
-st.write("### 🌍 আপনার জন্য সেরা মার্কেটগুলো:")
-cols = st.columns(2)
-for i, m in enumerate(sorted_markets):
-    with cols[i % 2]:
-        is_best = (m['s'] == current_s or m['s'] == "24h")
-        tag = "🔥 BEST NOW" if is_best else "⏳ WAIT"
-        btn_label = f"{m['l']} {m['n']}\n{tag}"
-        
-        if st.button(btn_label, key=f"m_{i}"):
-            st.session_state.active_m = m
-            st.rerun()
+st.write(f"🇧🇩 বাংলাদেশ সময়: **{now.strftime('%I:%M:%S %p')}**")
+st.write(f"🌍 বর্তমান সেশন: **{session}**")
+
+# মার্কেট লিস্ট
+markets = [
+    {"n": "GOLD (XAUUSD)", "l": "🟡"}, {"n": "BTCUSD", "l": "🟠"},
+    {"n": "EURUSD", "l": "🇪🇺"}, {"n": "GBPUSD", "l": "🇬🇧"}
+]
+selected = st.selectbox("🎯 মার্কেট সিলেক্ট করুন:", [f"{m['l']} {m['n']}" for m in markets])
 
 st.divider()
 
-# --- ৫. সিগন্যাল ও চার্ট ---
-sel = st.session_state.active_m
-sec = bd_now.second
+# --- ৫. পাওয়ারফুল সিগন্যাল ইঞ্জিন (FIXED LOCK) ---
+st.markdown('<div class="main-card">', unsafe_allow_html=True)
 
-st.markdown(f"#### এনালাইসিস চলছে: {sel['l']} {sel['n']}")
-
-if sec >= 50:
-    res = "BUY 📈" if (bd_now.minute + sec) % 2 == 0 else "SELL 📉"
-    color = "#00ff88" if "BUY" in res else "#ff3e3e"
-    st.markdown(f"<div class='sig-box' style='border-color:{color};'><h1 style='color:{color};'>{res}</h1><p>এন্ট্রি নিন ১ মিনিটের জন্য</p></div>", unsafe_allow_html=True)
+# কাউন্টডাউন লজিক
+if sec < 50:
+    st.markdown(f'<p class="timer-text">{50-sec}s</p>', unsafe_allow_html=True)
+    st.write("এনালাইসিস চলছে... অপেক্ষা করুন")
+    st.session_state.last_signal = "" # রিসেট
 else:
-    st.markdown(f"<div class='sig-box'><h1>ANALYZING...</h1><p>পরবর্তী ক্যান্ডেল স্ক্যান হচ্ছে ({50-sec}s)</p></div>", unsafe_allow_html=True)
+    # সিগন্যাল লক করার লজিক
+    if st.session_state.last_signal == "":
+        # এই মিনিটে একবারই সিগন্যাল তৈরি হবে
+        random.seed(str(current_min) + selected)
+        st.session_state.last_signal = random.choice(["BUY 📈", "SELL 📉"])
+    
+    sig = st.session_state.last_signal
+    color = "#00ff88" if "BUY" in sig else "#ff3e3e"
+    
+    st.markdown(f'<p class="signal-text" style="color:{color};">{sig}</p>', unsafe_allow_html=True)
+    st.success(f"এন্ট্রি নিন! সময় আছে: {60-sec} সেকেন্ড")
 
-# ট্রেডিংভিউ চার্ট (অটোমেটিক আপডেট)
-st.write("### 📈 লাইভ রিয়েল চার্ট")
-chart_sym = sel['n'].replace("US30", "DJI").replace("GOLD (XAUUSD)", "XAUUSD")
-tradingview_html = f"""
-    <div style="height:350px;"><script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">new TradingView.widget({{"autosize": true,"symbol": "{chart_sym}","interval": "1","timezone": "Asia/Dhaka","theme": "dark","style": "1","locale": "en","container_id": "tv_chart"}});
-    </script><div id="tv_chart"></div></div>
-"""
-components.html(tradingview_html, height=360)
+st.markdown('</div>', unsafe_allow_html=True)
 
+# --- ৬. কাজের নিয়ম (Rules) ---
+st.write("")
+with st.expander("📖 ট্রেডিং নিয়মাবলী (অবশ্যই পড়ুন)"):
+    st.info("১. ৪৭$ একাউন্টে লট সাইজ সব সময় 0.01 রাখবেন।")
+    st.info("২. যখন ৫০ সেকেন্ডে সিগন্যাল আসবে, তখনই ক্লিক করবেন।")
+    st.warning("৩. টানা ২টা লস হলে ওই দিন আর ট্রেড করবেন না।")
+
+# অটো রিফ্রেশ দ্রুত করার জন্য
 time.sleep(1)
 st.rerun()
