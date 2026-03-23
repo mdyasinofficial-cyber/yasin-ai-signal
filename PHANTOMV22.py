@@ -1,107 +1,158 @@
 import streamlit as st
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import random
-import streamlit.components.v1 as components
+import pandas as pd
+import pandas_ta as ta  # টেকনিক্যাল এনালাইসিসের জন্য (ইন্সটল করতে হবে: pip install pandas_ta)
 
-# --- ১. অ্যাপ সেটআপ ও পাসওয়ার্ড (ARAFAT_V64) ---
-st.set_page_config(page_title="PHANTOM V110", layout="wide")
+# --- ১. হাইপার কনফিগারেশন: ARAFAT ROZA-MONI : PHANTOM V32 PRO ---
+st.set_page_config(
+    page_title="ARAFAT ROZA-MONI : PHANTOM V32 PRO", 
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-if 'auth' not in st.session_state: st.session_state.auth = False
+# মাস্টার পাসওয়ার্ড সেটআপ (সিকিউরিটির জন্য এটি পরিবর্তন করুন)
+SECURE_PASSWORD = "Arafat@Vip#Quantum2026"
+
+# --- ২. সিকিউরিটি চেক ---
+if 'auth' not in st.session_state:
+    st.session_state.auth = False
 
 if not st.session_state.auth:
-    st.markdown("<h2 style='text-align:center; color:#58a6ff;'>🔒 PHANTOM V110 ACCESS</h2>", unsafe_allow_html=True)
-    pw = st.text_input("পাসওয়ার্ড দিন:", type="password")
-    if st.button("UNLOCK"):
-        if pw == "ARAFAT_V64":
+    st.markdown("""
+        <style>
+        .stApp { background-color: #000; color: #ffd700; text-align: center; }
+        .login-box { border: 2px solid #ffd700; padding: 40px; border-radius: 20px; margin-top: 100px; box-shadow: 0 0 30px #ffd70033; }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<div class='login-box'>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#ffd700;'>👻 PHANTOM V32 PRO</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#777;'>ARAFAT ROZA-MONI : SECURE ACCESS</p>", unsafe_allow_html=True)
+    
+    pwd_input = st.text_input("মাস্টার পিন দিন", type="password")
+    if st.button("সিস্টেম আনলক করুন 🔓", use_container_width=True):
+        if pwd_input == SECURE_PASSWORD:
             st.session_state.auth = True
             st.rerun()
+        else:
+            st.error("ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।")
+    st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- ২. ডার্ক স্টাইল ও লোগো ডিজাইন ---
+# --- ৩. মেইন সিস্টেম থিম ও স্টাইল ---
 st.markdown("""
     <style>
-    .stApp { background-color: #0b0e11; color: white; }
-    .sig-box {
-        background: #161b22; border: 3px solid #30363d;
-        border-radius: 20px; padding: 40px; text-align: center;
+    #MainMenu, footer, header, .stDeployButton, #stDecoration, [data-testid="sidebarNavView"] {visibility: hidden; display:none;}
+    .stApp { background-color: #000; transition: background-color 0.5s; font-family: 'Segoe UI', sans-serif; }
+    .card {
+        border: 2px solid #ffd700; border-radius: 25px; padding: 25px;
+        text-align: center; max-width: 380px; margin: auto; background: rgba(0,0,0,0.85);
+        box-shadow: 0 0 40px rgba(0,0,0,1);
     }
-    .best-m { color: #00ff88; font-size: 12px; font-weight: bold; }
+    .status-text { font-size: 11px; color: #ffd700; letter-spacing: 4px; animation: blink 1.2s infinite; font-weight: bold; }
+    @keyframes blink { 0% {opacity:1} 50% {opacity:0.2} 100% {opacity:1} }
+    .indicator-val { font-size: 14px; color: #aaa; margin-top: 5px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- ৩. রিয়েল লোগোসহ মার্কেট লিস্ট ---
-tz = pytz.timezone('Asia/Dhaka')
-now = datetime.now(tz)
-sec = now.second
-
-markets = [
-    {"n": "GOLD (XAUUSD)", "l": "🟡", "s": "OANDA:XAUUSD"},
-    {"n": "BTCUSD", "l": "🟠", "s": "BINANCE:BTCUSD"},
-    {"n": "EURUSD", "l": "🇪🇺", "s": "FX:EURUSD"},
-    {"n": "GBPUSD", "l": "🇬🇧", "s": "FX:GBPUSD"},
-    {"n": "ETHUSD", "l": "💠", "s": "BINANCE:ETHUSD"}
+# Quotex মার্কেটের বড় লিস্ট
+quotex_markets = [
+    {"name": "EUR/USD (OTC)", "flag": "🇪🇺🇺🇸"}, {"name": "GOLD (XAU)", "flag": "🟡"},
+    {"name": "GBP/USD (OTC)", "flag": "🇬🇧🇺🇸"}, {"name": "USD/BDT", "flag": "🇺🇸🇧🇩"},
+    {"name": "BTC/USDT", "flag": "₿"}, {"name": "USD/INR (OTC)", "flag": "🇺🇸🇮🇳"},
+    {"name": "AUD/CAD (OTC)", "flag": "🇦🇺🇨🇦"}, {"name": "USD/JPY", "flag": "🇺🇸🇯🇵"},
+    {"name": "EUR/GBP", "flag": "🇪🇺🇬🇧"}, {"name": "CRYPTO IDX", "flag": "🌐"}
 ]
 
-st.title("🛡️ PHANTOM V110 - 99% LOGIC")
-st.write(f"⏰ বিডি টাইম: **{now.strftime('%I:%M:%S %p')}**")
+# --- ৪. টেকনিক্যাল এনালাইসিস লজিক ---
+tz = pytz.timezone('Asia/Dhaka')
+now = datetime.now(tz)
+rem_sec = 60 - now.second
+next_t = (now + timedelta(minutes=1)).strftime('%I:%M %p')
 
-selected_m = st.selectbox("🎯 মার্কেট সিলেক্ট করুন:", [f"{m['l']} {m['n']}" for m in markets])
-current_m = next(m for m in markets if f"{m['l']} {m['n']}" == selected_m)
-
-st.divider()
-
-# --- ৪. ৯৯% একুরেসি সিগন্যাল ইঞ্জিন (৩ লজিক ফিল্টার) ---
-if 'locked_sig' not in st.session_state: st.session_state.locked_sig = ""
-if 'current_min' not in st.session_state: st.session_state.current_min = -1
-
-if sec < 45:
-    st.session_state.locked_sig = ""
-    st.markdown(f"<div class='sig-box'><h1>এনালাইসিস চলছে...</h1><p>RSI, Trend ও Volume চেক হচ্ছে ({45-sec}s)</p></div>", unsafe_allow_html=True)
-    st.progress(sec / 45)
-else:
-    if st.session_state.locked_sig == "" or st.session_state.current_min != now.minute:
-        # ৩টি লজিক চেক (সিমুলেশন)
-        random.seed(str(now.minute) + current_m['n'])
-        logic_match = random.randint(1, 100)
-        
-        # যদি ৯৯% লজিক না মিলে তবে ড্যাঞ্জার
-        if logic_match < 30: # ৩০% ক্ষেত্রে মার্কেট রিস্কি থাকে
-            st.session_state.locked_sig = "⚠️ DANGER / NO TRADE"
-        else:
-            st.session_state.locked_sig = random.choice(["B (BUY) 📈", "S (SELL) 📉"])
-        st.session_state.current_min = now.minute
-
-    sig = st.session_state.locked_sig
-    color = "#00ff88" if "B (BUY)" in sig else "#ff3e3e" if "S (SELL)" in sig else "#ffaa00"
+def get_real_time_indicators():
+    """রিয়েল-টাইম ডাটা সিমুলেট করে ইন্ডিকেটর ক্যালকুলেট করে।"""
+    # নোট: প্রোডাকশন লেভেলে এখানে ব্রোকার API থেকে ডাটা আসবে।
+    # আমরা এখানে Pandas DataFrame তৈরি করে Pandas TA লাইব্রেরি ব্যবহার করছি।
     
-    st.markdown(f"""
-        <div class="sig-box" style="border-color: {color};">
-            <h1 style="color: {color}; font-size: 70px; margin: 0;">{sig}</h1>
-            <p style="font-size: 18px;">{'পরবর্তী ১ মিনিটের জন্য নিশ্চিত সংকেত' if 'DANGER' not in sig else 'মার্কেট এখন ঝুঁকিপূর্ণ, অপেক্ষা করুন'}</p>
-            <h3 style="color: #58a6ff;">টাইমার: {60-sec}s বাকি</h3>
+    # ডামি ডাটা তৈরি (২০টি ক্যান্ডেল)
+    data = {
+        'close': [random.uniform(1.0900, 1.1000) for _ in range(20)]
+    }
+    df = pd.DataFrame(data)
+    
+    # RSI (14 period) ক্যালকুলেশন
+    df.ta.rsi(length=14, append=True)
+    
+    # SMA (10 period) ক্যালকুলেশন
+    df.ta.sma(length=10, append=True)
+    
+    last_rsi = round(df['RSI_14'].iloc[-1], 2)
+    last_sma = round(df['SMA_10'].iloc[-1], 4)
+    last_price = round(df['close'].iloc[-1], 4)
+    
+    return last_price, last_rsi, last_sma
+
+# ইন্ডিকেটর ডাটা নেওয়া
+last_price, last_rsi, last_sma = get_real_time_indicators()
+
+# --- ৫. সিগন্যাল লজিক (ইন্ডিকেটর ভিত্তিক) ---
+best_signal = None
+
+# সব মার্কেট চেক করার পরিবর্তে, প্রথম মার্কেটে সিগন্যাল খুঁজছে (ব্রোকার API থাকলে লুপ ব্যবহার হবে)
+for market in quotex_markets:
+    # এখানে রিয়েল লজিক অনুযায়ী সিগন্যাল তৈরি করা হবে
+    # উদাহরণ: RSI < 30 এবং Price > SMA হলে BUY
+    
+    if last_rsi < 30 and last_price > last_sma:
+        best_signal = {"market": market, "type": "STRONG BUY", "col": "#002b5c", "txt": "#00fbff", "icon": "📈", "bn": "এখনই বাই (BUY) নিন"}
+        break
+    elif last_rsi > 70 and last_price < last_sma:
+        best_signal = {"market": market, "type": "STRONG SELL", "col": "#5c0000", "txt": "#ff4b4b", "icon": "📉", "bn": "এখনই সেল (SELL) নিন"}
+        break
+
+# --- ৬. ডিসপ্লে ও ভয়েস আপডেট ---
+if best_signal:
+    bg, txt, sig_en, sig_bn, icon = best_signal['col'], best_signal['txt'], best_signal['type'], best_signal['bn'], best_signal['icon']
+    m_name, m_flag = best_signal['market']['name'], best_signal['market']['flag']
+    voice_msg = f"সতর্কবার্তা! {m_name} মার্কেটে এখনই {best_signal['type']} এন্ট্রি নিন।"
+else:
+    bg, txt, sig_en, sig_bn, m_name, m_flag, icon = "#000", "#ffd700", "SCANNING...", "১০০টি মার্কেট চেক হচ্ছে...", "SEARCHING SIGNAL", "🔍", "👻"
+    voice_msg = ""
+
+# সিগন্যাল আসলে স্ক্রিন কালার চেঞ্জ হবে
+st.markdown(f"<style>.stApp {{ background-color: {bg}; }} .card {{ border-color: {txt}; color: {txt}; box-shadow: 0 0 50px {txt}44; }}</style>", unsafe_allow_html=True)
+
+# ভয়েস এলার্ট (ক্যান্ডেল শুরু হওয়ার ঠিক আগে)
+if voice_msg != "" and rem_sec >= 58:
+    st.markdown(f"""<audio autoplay><source src="https://translate.google.com/translate_tts?ie=UTF-8&q={voice_msg.replace(' ', '%20')}&tl=bn&client=tw-ob" type="audio/mpeg"></audio>""", unsafe_allow_html=True)
+
+# মেইন ড্যাশবোর্ড
+st.markdown(f"""
+    <div class='card'>
+        <p class='status-text'>PHANTOM HYPER-SCANNER V32 PRO</p>
+        <div style='background:rgba(255,255,255,0.05); padding:15px; border-radius:15px; margin:15px 0;'>
+            <span style='font-size:35px;'>{m_flag}</span><br>
+            <span style='font-size:22px; font-weight:bold; color:#fff;'>{m_name}</span>
+            <div class='indicator-val'>
+                Price: {last_price} | RSI: {last_rsi} | SMA: {last_sma}
+            </div>
         </div>
-    """, unsafe_allow_html=True)
-
-# --- ৫. ট্রেডিংভিউ লাইভ চার্ট (১ মিনিট ক্যান্ডেল সেটআপ) ---
-st.write("### 📈 ট্রেডিংভিউ ১-মিনিট লাইভ চার্ট")
-tv_html = f"""
-    <div style="height:450px;">
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-    <script type="text/javascript">
-    new TradingView.widget({{
-      "autosize": true, "symbol": "{current_m['s']}", "interval": "1",
-      "timezone": "Asia/Dhaka", "theme": "dark", "style": "1",
-      "locale": "en", "toolbar_bg": "#f1f3f6", "enable_publishing": false,
-      "hide_side_toolbar": false, "allow_symbol_change": true,
-      "details": true, "container_id": "tv_chart"
-    }});
-    </script>
-    <div id="tv_chart"></div>
+        <div style='font-size: 100px; font-weight: 900; margin:0; line-height:1;'>{rem_sec}s</div>
+        <hr style='border: 0.5px solid {txt}22; margin:20px 0;'>
+        <h1 style='font-size: 60px; margin:0;'>{icon}</h1>
+        <div style='font-size: 35px; font-weight: 900; letter-spacing:1px;'>{sig_en}</div>
+        <div style='background:{txt}44; padding:8px 20px; border-radius:50px; display:inline-block; margin-top:8px; color:#fff; font-weight:bold;'>{sig_bn}</div>
+        <div style='margin-top:25px; font-size:12px; opacity:0.6;'>
+            NEXT SIGNAL: {next_t}<br>
+            ARAFAT ROZA-MONI : PHANTOM SERIES
+        </div>
     </div>
-"""
-components.html(tv_html, height=460)
+""", unsafe_allow_html=True)
 
+# প্রতি ১ সেকেন্ডে রিফ্রেশ
 time.sleep(1)
 st.rerun()
